@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Build directories
+/dist/
+/build/
+
+# Temporary files
+*.zip
+*.log
+.DS_Store
+
