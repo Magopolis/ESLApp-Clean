@@ -10,3 +10,6 @@ node_modules/
 *.log
 .DS_Store
 
+# Confidential
+.env
+package-lock.json
