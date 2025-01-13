@@ -4,14 +4,16 @@ const { startStandaloneServer } = require("@apollo/server/standalone");
 // Define GraphQL schema
 const typeDefs = `
   type Query {
-    greeting: String
+    greeting: String,
+    exampleMessage: String
   }
 `;
 
 // Define resolvers
 const resolvers = {
   Query: {
-    greeting: () => "Hello! Welcome to the ESL App."
+    greeting: () => "Hello! Welcome to the ESL App.",
+    exampleMessage: () => "This is a new message!"
   }
 };
 
