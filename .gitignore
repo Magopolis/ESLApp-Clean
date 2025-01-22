@@ -10,6 +10,17 @@ node_modules/
 *.log
 .DS_Store
 
-# Confidential
+# Environment variables
 .env
+
+# Lock files (optional, depending on your preference)
 package-lock.json
+yarn.lock
+
+# IDE files (if applicable)
+.vscode/
+.idea/
+*.iml
+
+# OS files
+Thumbs.db
