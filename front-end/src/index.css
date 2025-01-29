@@ -1,28 +1,121 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
     margin: 0;
-    padding: 0;
-}
-
-h1 {
-    color: #4CAF50;
-    text-align: center;
-    margin-top: 20px;
-}
-
-p {
-    text-align: center;
-    font-size: 18px;
-    color: #333;
-}
-
-div {
-    margin: 50px auto;
-    width: 50%;
-    text-align: center;
-    background-color: white;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    height: auto;
+  }
+  
+  .app-container {
+    border: 5px solid blue;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .main-content {
+    border: 5px solid orange;
+    flex: 1;
     padding: 20px;
-    border-radius: 8px;
-}
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align items to the top */
+  justify-content: flex-start; /* Ensure items stack from the top */
+  }
+  
+  .input-box,
+  .output-box {
+    width: 90%;
+    height: 100px;
+    margin: 10px 0;
+    padding: 10px;
+    font-size: 16px;
+  }
+  
+  .submit-button {
+    margin: 10px 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .submit-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Responsive bar styling */
+  .responsive-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+  }
+  
+  .bar-button {
+    flex: 1 1 10%;
+    min-width: 60px;
+    margin: 5px;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+  }
+  
+  .bar-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Media query for narrow screens */
+  @media screen and (max-width: 768px) {
+    .responsive-bar {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: auto;
+    }
+  
+    .bar-button {
+      flex: 1;
+      text-align: center;
+    }
+  }
+  
+  /* Media query for wider screens */
+  @media screen and (min-width: 769px) {
+    .app-container {
+      display: flex;
+      flex-direction: row; /* Make the bar appear to the side */
+    }
+  
+    .main-content {
+      flex: 3; /* Adjust the size of the main content */
+    }
+  
+    .responsive-bar {
+      flex-direction: column;
+      position: static;
+      width: 200px; /* Sidebar width */
+      height: auto;
+      padding: 20px;
+      border-top: none;
+      border-right: 1px solid #ddd; /* Optional right border */
+    }
+  
+    .bar-button {
+      flex: none; /* Disable flex-grow */
+      margin-bottom: 10px; /* Add spacing between buttons */
+      text-align: center;
+    }
+  }
+  

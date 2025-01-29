@@ -19,21 +19,22 @@ const AppContent = () => {
   };
 
   return (
-    <div>
-      <h1>ChatGotYourTongue</h1>
-      <form onSubmit={handleSubmit}>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Ask me anything..."
-        ></textarea>
-        <button type="submit">Submit</button>
-      </form>
-      <div>
-        <h2>Response:</h2>
-        {loading && <p>Loading...</p>}
-        {error && <p>Error: {error.message}</p>}
-        {data && <p>{data.ask}</p>}
+    <div className="app-container">
+      {/* Main Content */}
+      <div className="main-content">
+        <h1>ChatGotYourTongue</h1>
+        <textarea placeholder="Ask me anything..." className="input-box"></textarea>
+        <button className="submit-button">Submit</button>
+        <textarea placeholder="output goes here..." className="output-box"></textarea>
+      </div>
+
+      {/* Sidebar/Bottom Bar */}
+      <div className="responsive-bar">
+        {Array.from({ length: 8 }, (_, index) => (
+          <button key={index} className="bar-button">
+            Button {index + 1}
+          </button>
+        ))}
       </div>
     </div>
   );
