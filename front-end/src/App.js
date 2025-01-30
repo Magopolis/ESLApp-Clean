@@ -1,5 +1,5 @@
-import React, { useState } from "https://esm.sh/react";
-import ReactDOM from "https://esm.sh/react-dom/client";
+import React, { useState } from "react";
+import ReactDOM from "react-dom/client";
 import { fetchFromAPI } from "./apiService.js"; // Import the unified API function
 
 const AppContent = () => {
@@ -38,5 +38,5 @@ const AppContent = () => {
   );
 };
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<AppContent />);
+export default AppContent;
+
