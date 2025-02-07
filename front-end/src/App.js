@@ -21,9 +21,15 @@ const AppContent = () => {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         ></textarea>
-        <button className="submit-button" onClick={() => handleAPICall("openai", "gpt-3.5-turbo")}>
-          Ask AI (Short)
-        </button>
+  <div style={{ display: "flex", gap: "10px" }}>
+  <button 
+    className="submit-button" 
+    onClick={() => handleAPICall("openai", "gpt-3.5-turbo")}
+  >Ask AI (Short)</button>
+  <button className="submit-button">Toggle a Mode</button>
+  <button className="submit-button">More Toggling</button>
+</div>
+
         <textarea placeholder="Output goes here..." className="output-box" value={output} readOnly></textarea>
       </div>
 

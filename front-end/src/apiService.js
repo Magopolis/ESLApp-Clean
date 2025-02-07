@@ -1,9 +1,10 @@
 export const fetchFromAPI = async ({ service, input, model = null }) => {
     let url, method, body;
-  
+    const API_BASE_URL = "http://localhost:4000/graphql"; // Change from 4001 to 4000
+
     switch (service) {
       case "openai":
-        url = "http://localhost:4001/ask";
+        url = `${API_BASE_URL}/ask`;  // ✅ Uses correct port
         method = "POST";
         body = JSON.stringify({
           prompt: `${input} \n\n Admin Prompt: "short answer <40 words"`, // Append admin prompt
@@ -12,25 +13,25 @@ export const fetchFromAPI = async ({ service, input, model = null }) => {
         break;
   
       case "huggingface":
-        url = "http://localhost:4001/pos";
+        url = `${API_BASE_URL}/pos`;
         method = "POST";
         body = JSON.stringify({ text: input });
         break;
   
       case "pexels":
-        url = `http://localhost:4001/images?query=${input}`;
+        url = `${API_BASE_URL}/images?query=${input}`;
         method = "GET"; // No body needed
         body = null;
         break;
   
       case "whisper":
-        url = "http://localhost:4001/transcribe"; // Example for Whisper API
+        url = "${API_BASE_URL}/transcribe"; // Example for Whisper API
         method = "POST";
         body = JSON.stringify({ audioFile: input });
         break;
   
       case "text-to-speech":
-        url = "http://localhost:4001/speech"; // Example for TTS
+        url = "${API_BASE_URL}/speech"; // Example for TTS
         method = "POST";
         body = JSON.stringify({ text: input, voice: "en-US-Wavenet-F" });
         break;
