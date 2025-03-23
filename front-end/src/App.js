@@ -71,7 +71,7 @@ const AppContent = () => {
   return (
     <div className="app-container">
       <div className="main-content">
-        <h1>ChatGotYourTongue</h1>
+        <h1>hello world-ChatGotYourTongue</h1>
         
         <textarea
           placeholder="Ask me anything..."
