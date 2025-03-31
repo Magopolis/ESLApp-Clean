@@ -9,6 +9,11 @@ const AppContent = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
+  const toggleMode = () => {
+    setMode((prev) => (prev === "cloud" ? "local" : "cloud"));
+  };
+
+
   // Handle API calls
   const handleAPICall = async (service, model = null) => {
     let response;
@@ -25,6 +30,35 @@ const AppContent = () => {
       }
     }
   };
+
+  const handleSpeakSelection = async () => {
+    const selection = window.getSelection().toString().trim();
+  
+    if (!selection) {
+      alert("Please highlight some text to speak.");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:3000/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: selection }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.audioUrl) {
+        setAudioUrl(`http://localhost:3000${data.audioUrl}`);
+      } else {
+        alert("❌ TTS failed. No audio URL returned.");
+      }
+    } catch (err) {
+      console.error("TTS error:", err);
+      alert("❌ Something went wrong while calling TTS.");
+    }
+  };
+  
 
   // Play the generated speech
   const playAudio = () => {
@@ -101,6 +135,7 @@ const AppContent = () => {
           <button className="bar-button" onClick={() => handleAPICall("pexels")}>Find Images</button>
           <button className="bar-button" onClick={() => handleAPICall("whisper")}>Transcribe Audio</button>
           <button className="bar-button" onClick={() => handleAPICall("text-to-speech")}>Read Aloud</button>
+          <button className="bar-button" onClick={() => handleAPICall("huggingface")}>huggingface</button>
         </div>
 
         {/* Audio Playback */}
@@ -113,6 +148,9 @@ const AppContent = () => {
 
         {/* Clear Button */}
         <button className="clear-button" onClick={clearInputs}>Clear All</button>
+        <button onClick={handleSpeakSelection}>🔊 Speak Selection</button>
+<button onClick={playAudio}>▶️ Play</button>
+
       </div>
     </div>
   );
