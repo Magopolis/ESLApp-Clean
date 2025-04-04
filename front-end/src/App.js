@@ -40,7 +40,7 @@ const AppContent = () => {
     }
   
     try {
-      const response = await fetch("http://localhost:3000/speak", {
+      const response = await fetch("http://localhost:5050/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: selection }),
@@ -49,7 +49,7 @@ const AppContent = () => {
       const data = await response.json();
   
       if (data.audioUrl) {
-        setAudioUrl(`http://localhost:3000${data.audioUrl}`);
+        setAudioUrl(`http://localhost:5050${data.audioUrl}`);
       } else {
         alert("❌ TTS failed. No audio URL returned.");
       }
