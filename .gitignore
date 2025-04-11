@@ -12,6 +12,7 @@ node_modules/
 
 # Environment variables
 .env
+venv/
 
 # Lock files (optional, depending on your preference)
 package-lock.json
@@ -26,3 +27,5 @@ yarn.lock
 Thumbs.db
 
 front-end/build/
+
+

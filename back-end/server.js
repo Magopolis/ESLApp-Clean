@@ -11,6 +11,35 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
 
+//const express = require("express");
+//const { exec } = require("child_process");
+const app = express();
+const PORT = 5050;
+
+app.use(express.json());
+
+app.post("/say", (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).send("No text provided");
+
+  // Safely pass text to Python
+  const safeText = text.replace(/"/g, '\\"');
+  const pythonPath = path.resolve(__dirname, "../venv/bin/python");
+const scriptPath = path.resolve(__dirname, "say.py");
+
+exec(`"${pythonPath}" "${scriptPath}" "${safeText}"`, (error, stdout, stderr) => {
+  if (error) {
+    console.error("Error:", error);
+    return res.status(500).send("Failed to speak");
+  }
+  res.send("Spoken");
+});
+});
+
+//app.listen(PORT, () => {
+//  console.log(`Server running at http://localhost:${PORT}`);
+//});
+
 console.log("Using OpenAI API Key:", process.env.OPENAI_API_KEY);
 
 // Initialize OpenAI client
@@ -24,10 +53,8 @@ console.log("OpenAI client initialized.");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-app.use(express.json());
 app.use(cors());
-app.use("/audio", express.static(path.join(__dirname, "audio")));
+
 
 app.post("/speak", async (req, res) => {
   const text = req.body.prompt;
@@ -95,9 +122,10 @@ const resolvers = {
 };
 
 // Start both servers
-app.listen(5050, () => {
-  console.log("✅ Express server ready at http://localhost:5050");
+app.listen(PORT, () => {
+  console.log(`✅ Express server ready at http://localhost:${PORT}`);
 });
+
 
 const server = new ApolloServer({ typeDefs, resolvers });
 const { url } = await startStandaloneServer(server, {

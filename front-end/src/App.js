@@ -8,7 +8,16 @@ const AppContent = () => {
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-
+  
+  const handleSpeak = async () => {
+    const text = "This came from React.";
+    await fetch("http://localhost:5050/say", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+  };
+  
   const toggleMode = () => {
     setMode((prev) => (prev === "cloud" ? "local" : "cloud"));
   };
