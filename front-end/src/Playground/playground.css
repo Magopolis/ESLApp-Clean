@@ -1,0 +1,79 @@
+.playground-container {
+    display: flex;
+    height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
+    gap: 1rem;
+  }
+  
+  .left-column {
+    flex: 1;
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 12px;
+    overflow-y: auto;
+  }
+  
+  .right-column {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 1rem;
+  }
+  
+  .chat-log {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .chat-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    max-width: 70%;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  
+  .from-user {
+    background: #e0e0e0;
+    align-self: flex-start;
+  }
+  
+  .from-gpt4o {
+    background: #007aff;
+    color: white;
+    align-self: flex-end;
+  }
+  
+  .chat-input {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .chat-input input {
+    flex: 1;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  
+  .chat-input button {
+    padding: 10px 16px;
+    font-size: 1rem;
+    border: none;
+    background: #007aff;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  
