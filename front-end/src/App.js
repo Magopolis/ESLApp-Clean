@@ -38,25 +38,25 @@ const AppContent = () => {
       alert("Please highlight some text to speak.");
       return;
     }
-
+  
     try {
-      const response = await fetch("http://localhost:5050/speak", {
+      const response = await fetch("http://localhost:5050/say", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: selection }),
+        body: JSON.stringify({ text: selection }), // also changed from `prompt` to `text`
       });
-
-      const data = await response.json();
-      if (data.audioUrl) {
-        setAudioUrl(`http://localhost:5050${data.audioUrl}`);
+  
+      if (response.ok) {
+        console.log("✅ Speech started for:", selection);
       } else {
-        alert("❌ TTS failed. No audio URL returned.");
+        alert("❌ TTS failed. Server returned error.");
       }
     } catch (err) {
       console.error("TTS error:", err);
       alert("❌ Something went wrong while calling TTS.");
     }
   };
+  
 
   const playAudio = () => {
     if (audioUrl) {

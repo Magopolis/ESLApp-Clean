@@ -42,12 +42,7 @@ const Playground = ({
       <div className="left-column">
         <h1>🎉 GPTPartyRoom 🎉</h1>
         <p>This is Bob Dole's Playground. Don’t sit on the swingset.</p>
-        <img
-          src="https://via.placeholder.com/300x150"
-          alt="placeholder1"
-          style={{ marginBottom: "1rem" }}
-        />
-        {/* More content placeholders can go here */}
+        <img src="/BobDole01.png" style={{ marginBottom: "1rem" }} alt="Bob Dole says don’t sit on the swingset" />
       </div>
 
       <div className="right-column">
