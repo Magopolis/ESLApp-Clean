@@ -43,19 +43,19 @@ const AppContent = () => {
       const response = await fetch("http://localhost:5050/say", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: selection }), // also changed from `prompt` to `text`
+        body: JSON.stringify({ text: selection }),
       });
   
       if (response.ok) {
-        console.log("✅ Speech started for:", selection);
+        console.log("✅ Speaking:", selection);
       } else {
-        alert("❌ TTS failed. Server returned error.");
+        console.error("❌ TTS server returned error");
       }
     } catch (err) {
-      console.error("TTS error:", err);
-      alert("❌ Something went wrong while calling TTS.");
+      console.error("❌ TTS request failed:", err);
     }
   };
+  
   
 
   const playAudio = () => {

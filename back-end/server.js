@@ -104,8 +104,17 @@ const GralphWillNotBeIgnored = async (prompt, model) => {
     max_tokens: 100,
   });
 
-  return completion.choices[0].message.content.trim();
+  const content = completion.choices[0].message.content.trim();
+  
+  try {
+    const parsed = JSON.parse(content);
+    return parsed.data.ask;
+  } catch (error) {
+    console.error("Failed to parse JSON:", error);
+    return content; // fallback, or handle the error as needed
+  }
 };
+
 
 const resolvers = {
   Query: {

@@ -42,7 +42,8 @@ const Playground = ({
       <div className="left-column">
         <h1>🎉 GPTPartyRoom 🎉</h1>
         <p>This is Bob Dole's Playground. Don’t sit on the swingset.</p>
-        <img src="/BobDole01.png" style={{ marginBottom: "1rem" }} alt="Bob Dole says don’t sit on the swingset" />
+        <img id="Bob" src="https://raw.githubusercontent.com/Magopolis/ESLApp-Clean/main/BobDole01.png" alt="Bob Dole says don't sit on the beanbag" />
+
       </div>
 
       <div className="right-column">

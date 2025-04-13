@@ -13,7 +13,9 @@
     border-radius: 12px;
     overflow-y: auto;
   }
-  
+  #Bob {
+    width: 90%;
+  }
   .right-column {
     flex: 2;
     display: flex;
