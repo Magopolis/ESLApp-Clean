@@ -1,7 +1,11 @@
-body {
-    margin: 0;
+  body {
+    background-image: url('https://github.com/Magopolis/ESLApp-Clean/raw/main/QuinglishLandingPage.png');
+    background-size: cover;          /* Fill entire screen */
+    background-position: center;     /* Center the image */
+    background-repeat: no-repeat;    /* Don’t tile */
+    min-height: 100vh;               /* Ensure it stretches full viewport height */
+    margin: 0;                       /* Prevent scrollbars from default margin */
     font-family: Arial, sans-serif;
-    height: auto;
   }
   
   .app-container {

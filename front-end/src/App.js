@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react";
-import { fetchFromAPI } from "./apiService.js";
-import Playground from "./Playground/Playground.js"; // Make sure this exists
-
+import { fetchFromAPI } from "./apiService";
+import Playground from "./Playground/Playground";
+import Page3 from "./Playground/Page3";
 
 const AppContent = () => {
-  const [isPlayground, setIsPlayground] = useState(false);
+  const [view, setView] = useState("capsule");
   const [mode, setMode] = useState("cloud");
   const [prompt, setPrompt] = useState("");
   const [output, setOutput] = useState("");
@@ -13,8 +13,16 @@ const AppContent = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
-  const toggleMode = () => setMode((prev) => (prev === "cloud" ? "local" : "cloud"));
-  const handleToggleMode = () => setIsPlayground((prev) => !prev);
+  const toggleMode = () =>
+    setMode((prev) => (prev === "cloud" ? "local" : "cloud"));
+
+  const toggleView = () => {
+    setView((prev) =>
+      prev === "capsule" ? "playground" :
+      prev === "playground" ? "page3" :
+      "capsule"
+    );
+  };
 
   const handleAPICall = async (service, model = null) => {
     let response;
@@ -38,25 +46,21 @@ const AppContent = () => {
       alert("Please highlight some text to speak.");
       return;
     }
-  
+
     try {
       const response = await fetch("http://localhost:5050/say", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: selection }),
       });
-  
-      if (response.ok) {
-        console.log("✅ Speaking:", selection);
-      } else {
+
+      if (!response.ok) {
         console.error("❌ TTS server returned error");
       }
     } catch (err) {
       console.error("❌ TTS request failed:", err);
     }
   };
-  
-  
 
   const playAudio = () => {
     if (audioUrl) {
@@ -100,36 +104,20 @@ const AppContent = () => {
     <div className="app-container">
       <div className="main-content">
         <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
-          <button className="submit-button" onClick={() => handleAPICall("openai", "gpt-3.5-turbo")}>Ask AI (Short)</button>
-          <button className="submit-button" onClick={handleToggleMode}>
-            Toggle View ({isPlayground ? "Playground" : "Capsule"})
+          <button className="submit-button" onClick={() => handleAPICall("openai", "gpt-3.5-turbo")}>
+            Ask AI (Short)
+          </button>
+          <button className="submit-button" onClick={toggleView}>
+            Toggle View ({view})
           </button>
           <button className="submit-button" onClick={toggleMode}>
             Toggle Mode ({mode})
           </button>
         </div>
 
-        {/* 🔁 Toggle View */}
-        {isPlayground ? (
-          <Playground
-            prompt={prompt}
-            setPrompt={setPrompt}
-            output={output}
-            setOutput={setOutput}
-            audioUrl={audioUrl}
-            setAudioUrl={setAudioUrl}
-            recording={recording}
-            setRecording={setRecording}
-            mediaRecorderRef={mediaRecorderRef}
-            audioChunksRef={audioChunksRef}
-            handleAPICall={handleAPICall}
-            interactionData={[]} // placeholder
-            addInteraction={() => {}} // placeholder
-          />
-        ) : (
+        {view === "capsule" && (
           <>
             <h1>hello world - ChatGotYourTongue</h1>
-
             <textarea
               placeholder="Ask me anything..."
               className="input-box"
@@ -156,7 +144,6 @@ const AppContent = () => {
               <button className="bar-button" onClick={() => handleAPICall("pexels")}>Find Images</button>
               <button className="bar-button" onClick={() => handleAPICall("whisper")}>Transcribe Audio</button>
               <button className="bar-button" onClick={() => handleAPICall("text-to-speech")}>Read Aloud</button>
-              <button className="bar-button" onClick={() => handleAPICall("huggingface")}>huggingface</button>
             </div>
 
             {audioUrl && (
@@ -171,6 +158,26 @@ const AppContent = () => {
             <button onClick={playAudio}>▶️ Play</button>
           </>
         )}
+
+        {view === "playground" && (
+          <Playground
+            prompt={prompt}
+            setPrompt={setPrompt}
+            output={output}
+            setOutput={setOutput}
+            audioUrl={audioUrl}
+            setAudioUrl={setAudioUrl}
+            recording={recording}
+            setRecording={setRecording}
+            mediaRecorderRef={mediaRecorderRef}
+            audioChunksRef={audioChunksRef}
+            handleAPICall={handleAPICall}
+            interactionData={[]}
+            addInteraction={() => {}}
+          />
+        )}
+
+        {view === "page3" && <Page3 />}
       </div>
     </div>
   );
