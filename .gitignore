@@ -25,7 +25,10 @@ yarn.lock
 
 # OS files
 Thumbs.db
-
+*jpeg
 front-end/build/
 
+# too big
+*png
+*.png
 
