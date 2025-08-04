@@ -11,6 +11,17 @@ export const fetchFromAPI = async ({ service, input, model = null }) => {
           model: model || "gpt-3.5-turbo",
         });
         break;
+
+     case "local":
+  url = "http://localhost:11434/api/generate"; // Ollama REST endpoint
+  method = "POST";
+  body = JSON.stringify({
+    model: "mistral", // or "mistral:instruct" if you want
+    prompt: input,
+    stream: false
+  });
+  break;
+
   
       case "huggingface":
         url = `${API_BASE_URL}/pos`;

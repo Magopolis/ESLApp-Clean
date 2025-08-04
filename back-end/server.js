@@ -10,7 +10,6 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
-
 //const express = require("express");
 //const { exec } = require("child_process");
 const app = express();
@@ -90,10 +89,32 @@ app.post("/speak", async (req, res) => {
 // GraphQL setup for Gralph
 const typeDefs = gql`
   type Query {
-    ask(prompt: String!, model: String!): String
+    ask(prompt: String!, model: String, service: String): String
   }
 `;
+// Import fetch for Node
+const fetch = (await import("node-fetch")).default;
 
+// Local Mistral via Ollama
+const GralphMistralLocal = async (prompt) => {
+  console.log("🔍 Calling local Mistral via Ollama...");
+  const completion = await fetch("http://localhost:11434/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "mistral", // Or mistral:instruct if that's what you have
+      prompt,
+      stream: false
+    })
+  });
+
+  const data = await completion.json();
+  console.log("📝 Local Mistral response:", data);
+  return data.response || "No response from local Mistral.";
+};
+
+// Handles GPT (OpenAI) REST call from the front-end.
+// This is the OpenAI-only path — local Mistral is handled separately.
 const GralphWillNotBeIgnored = async (prompt, model) => {
   model = model || "gpt-3.5-turbo";
   console.log("🔍 Calling OpenAI with model:", model);
@@ -106,27 +127,35 @@ const GralphWillNotBeIgnored = async (prompt, model) => {
 
   const content = completion.choices[0].message.content.trim();
   
-  try {
-    const parsed = JSON.parse(content);
-    return parsed.data.ask;
-  } catch (error) {
-    console.error("Failed to parse JSON:", error);
-    return content; // fallback, or handle the error as needed
-  }
+try {
+  const parsed = JSON.parse(content);
+  const reply = parsed?.data?.ask || parsed;
+  console.log("✅ Backend returning parsed:", reply);
+  return reply;
+} catch (error) {
+  console.warn("⚠️ Falling back to raw content:", content);
+  return content; // fallback to raw string
+}
+
 };
 
 
 const resolvers = {
   Query: {
-    ask: async (_, { prompt, model }) => {
-      try {
-        console.log("🔍 Gralph received:", { prompt, model });
-        return await GralphWillNotBeIgnored(prompt, model);
-      } catch (error) {
-        console.error("❌ OpenAI API Error:", error);
-        return "An error occurred while processing your request.";
-      }
-    },
+    ask: async (_, { prompt, model, service }) => {
+  try {
+    console.log("🔍 Gralph received:", { prompt, model, service });
+    // Handle local Mistral requests
+    if (service === "local") {
+      return await GralphMistralLocal(prompt);
+    }
+    // Default to OpenAI handler
+    return await GralphWillNotBeIgnored(prompt, model);
+  } catch (error) {
+    console.error("❌ API Error:", error);
+    return "An error occurred while processing your request.";
+  }
+},
   },
 };
 

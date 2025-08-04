@@ -26,18 +26,42 @@ const AppContent = () => {
 
   const handleAPICall = async (service, model = null) => {
     let response;
+
     if (service === "whisper") {
       const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
       response = await fetchFromAPI({ service, file: audioBlob });
       setOutput(response.data?.transcribeAudio || "");
-    } else {
-      response = await fetchFromAPI({ service, input: prompt, model });
-      if (service === "text-to-speech") {
-        setAudioUrl(response.data?.synthesizeSpeech);
-      } else {
-        setOutput(JSON.stringify(response, null, 2));
-      }
+      return;
     }
+if (service === "local") {//local mistral button will only send service, model later
+  response = await fetchFromAPI({ service, input: prompt });
+  if (typeof response === "string") {
+    setOutput(response);
+  } else if (response?.data?.ask) {
+    setOutput(response.data.ask);
+  } else {
+    setOutput(JSON.stringify(response, null, 2));
+  }
+  return; // stop here so generic block doesn’t run
+}
+    response = await fetchFromAPI({ service, input: prompt, model });
+
+    if (service === "text-to-speech") {
+      setAudioUrl(response.data?.synthesizeSpeech);
+      return;
+    }
+
+    if (typeof response === "string") {
+      setOutput(response);
+      return;
+    }
+
+    if (response?.data?.ask) {
+      setOutput(response.data.ask);
+      return;
+    }
+
+    setOutput(JSON.stringify(response, null, 2));
   };
 
   const handleSpeakSelection = async () => {
@@ -140,6 +164,7 @@ const AppContent = () => {
 
             <div className="responsive-bar">
               <button className="bar-button" onClick={() => handleAPICall("openai", "gpt-4")}>GPT-4</button>
+              <button className="bar-button" onClick={() => handleAPICall("local")}>Mistral (Local)</button>
               <button className="bar-button" onClick={() => handleAPICall("huggingface")}>POS Tagging</button>
               <button className="bar-button" onClick={() => handleAPICall("pexels")}>Find Images</button>
               <button className="bar-button" onClick={() => handleAPICall("whisper")}>Transcribe Audio</button>
