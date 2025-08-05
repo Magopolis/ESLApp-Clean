@@ -33,8 +33,8 @@ const AppContent = () => {
       setOutput(response.data?.transcribeAudio || "");
       return;
     }
-if (service === "local") {//local mistral button will only send service, model later
-  response = await fetchFromAPI({ service, input: prompt });
+if (service === "ollama") {//local mistral button will only send service, model later
+  response = await fetchFromAPI({ service, model, input: prompt });
   if (typeof response === "string") {
     setOutput(response);
   } else if (response?.data?.ask) {
@@ -164,8 +164,11 @@ if (service === "local") {//local mistral button will only send service, model l
 
             <div className="responsive-bar">
               <button className="bar-button" onClick={() => handleAPICall("openai", "gpt-4")}>GPT-4</button>
-              <button className="bar-button" onClick={() => handleAPICall("local")}>Mistral (Local)</button>
-              <button className="bar-button" onClick={() => handleAPICall("huggingface")}>POS Tagging</button>
+              <button className="bar-button" onClick={() => handleAPICall("openai", "gpt-3.5-turbo")}>GPT-3.5</button>
+              <button className="bar-button" onClick={() => handleAPICall("ollama", "mistral:7b-instruct-q4_0")}>mistral:7b-instruct-q4_0 (Local)</button>
+              <button className="bar-button" onClick={() => handleAPICall("ollama", "mistral:instruct")}>Mistral:Instruct</button>
+              <button className="bar-button" onClick={() => handleAPICall("ollama","mistral:latest")}>Mistral:Latest</button>
+              <button className="bar-button" onClick={() => handleAPICall("huggingface")}>HF Model</button>
               <button className="bar-button" onClick={() => handleAPICall("pexels")}>Find Images</button>
               <button className="bar-button" onClick={() => handleAPICall("whisper")}>Transcribe Audio</button>
               <button className="bar-button" onClick={() => handleAPICall("text-to-speech")}>Read Aloud</button>

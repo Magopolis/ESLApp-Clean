@@ -146,7 +146,7 @@ const resolvers = {
   try {
     console.log("🔍 Gralph received:", { prompt, model, service });
     // Handle local Mistral requests
-    if (service === "local") {
+    if (service === "ollama") {
       return await GralphMistralLocal(prompt);
     }
     // Default to OpenAI handler
