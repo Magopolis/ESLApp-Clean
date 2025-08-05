@@ -33,17 +33,20 @@ const AppContent = () => {
       setOutput(response.data?.transcribeAudio || "");
       return;
     }
-if (service === "ollama") {//local mistral button will only send service, model later
-  response = await fetchFromAPI({ service, model, input: prompt });
+if (service === "ollama") {
+  const response = await fetchFromAPI({ service, model, input: prompt });
+//const FullJSON = JSON.stringify(response, null, 2);
+  console.log("📡 Sending LOCAL Mistral request:", model);
   if (typeof response === "string") {
     setOutput(response);
-  } else if (response?.data?.ask) {
-    setOutput(response.data.ask);
   } else {
-    setOutput(JSON.stringify(response, null, 2));
+    // Just show the response text, not the whole JSON
+    console.log("📝 Local Mistral response: I am ", model);
+    setOutput(response?.response || "No response.");
   }
-  return; // stop here so generic block doesn’t run
+  return; // Still safe to return here since Ollama is handled separately
 }
+
     response = await fetchFromAPI({ service, input: prompt, model });
 
     if (service === "text-to-speech") {

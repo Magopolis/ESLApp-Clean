@@ -19,7 +19,7 @@ export const fetchFromAPI = async ({ service, input, model = null }) => {
       url = "http://localhost:11434/api/generate";
       method = "POST";
       body = JSON.stringify({
-        model: "mistral:7b-instruct-q4_0", // or "mistral:instruct"
+        model: model || "mistral:7b-instruct-q4_0", //  "mistral:instruct"or "mistral:latest" if needed 
         prompt: input,
         stream: false,
       });
