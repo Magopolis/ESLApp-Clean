@@ -7,14 +7,13 @@
     margin: 0;                       /* Prevent scrollbars from default margin */
     font-family: Arial, sans-serif;
   }
-  
+
   .app-container {
     border: 5px solid blue;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
   }
-  
   .main-content {
     border: 5px solid orange;
     flex: 1;
@@ -47,6 +46,132 @@
   
   .submit-button:hover {
     background-color: #0056b3;
+  }
+
+  .ask-milo-panel {
+    box-sizing: border-box;
+    width: min(100%, 1000px);
+    padding: 24px;
+    border: 3px solid #19324d;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #19324d;
+  }
+
+  .ask-milo-heading,
+  .full-sentence-practice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .ask-milo-heading h2,
+  .ask-milo-heading p {
+    margin: 0;
+  }
+
+  .ask-milo-eyebrow {
+    color: #006f72;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .ask-milo-panel label {
+    display: block;
+    margin: 18px 0 6px;
+    font-weight: bold;
+  }
+
+  .ask-milo-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 90px;
+    padding: 12px;
+    border: 2px solid #9bb0bf;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .target-sentence {
+    font-size: 1.35rem;
+    font-weight: bold;
+    line-height: 1.5;
+  }
+
+  .practice-hint {
+    color: #52697a;
+  }
+
+  .chunk-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .chunk-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #b6c7d3;
+    border-radius: 10px;
+    background: #f4fbfb;
+  }
+
+  .chunk-speak-button {
+    min-height: 52px;
+    border: 2px solid #007b80;
+    border-radius: 8px;
+    background: white;
+    color: #19324d;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  .chunk-select-label {
+    margin: 0 !important;
+    font-size: 0.9rem;
+  }
+
+  .record-button,
+  .secondary-button {
+    padding: 9px 14px;
+    border: 1px solid #19324d;
+    border-radius: 6px;
+    background: #e8eef2;
+    color: #19324d;
+    cursor: pointer;
+  }
+
+  .secondary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .full-sentence-practice,
+  .comprehension-card {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 10px;
+    background: #fff4d8;
+  }
+
+  .comprehension-card input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #9bb0bf;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+
+  .answer-feedback {
+    font-weight: bold;
   }
   
   /* Responsive bar styling */
@@ -103,11 +228,11 @@
       display: flex;
       flex-direction: row; /* Make the bar appear to the side */
     }
-  
+
     .main-content {
       flex: 3; /* Adjust the size of the main content */
     }
-  
+
     .responsive-bar {
       flex-direction: column;
       position: static;
@@ -117,11 +242,10 @@
       border-top: none;
       border-right: 1px solid #ddd; /* Optional right border */
     }
-  
+
     .bar-button {
       flex: none; /* Disable flex-grow */
       margin-bottom: 10px; /* Add spacing between buttons */
       text-align: center;
     }
   }
-  

@@ -1,7 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { fetchFromAPI } from "./apiService";
 import Playground from "./Playground/Playground";
 import Page3 from "./Playground/Page3";
+import AskMiloPanel from "./AskMiloPanel";
 
 const AppContent = () => {
   const [view, setView] = useState("capsule");
@@ -10,6 +11,8 @@ const AppContent = () => {
   const [output, setOutput] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [recording, setRecording] = useState(false);
+  const [askMiloOpen, setAskMiloOpen] = useState(false);
+  const [askMiloOpenSession, setAskMiloOpenSession] = useState(0);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
@@ -127,6 +130,25 @@ if (service === "ollama") {
     setAudioUrl("");
   };
 
+  const openAskMilo = useCallback(() => {
+    setAskMiloOpenSession((current) => current + 1);
+    setAskMiloOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const handleAskMiloShortcut = (event) => {
+      if (
+        event.key.toLowerCase() === "m" &&
+        !["INPUT", "TEXTAREA"].includes(event.target.tagName)
+      ) {
+        openAskMilo();
+      }
+    };
+
+    window.addEventListener("keydown", handleAskMiloShortcut);
+    return () => window.removeEventListener("keydown", handleAskMiloShortcut);
+  }, [openAskMilo]);
+
   return (
     <div className="app-container">
       <div className="main-content">
@@ -140,9 +162,17 @@ if (service === "ollama") {
           <button className="submit-button" onClick={toggleMode}>
             Toggle Mode ({mode})
           </button>
+          <button className="submit-button" onClick={openAskMilo}>
+            Ask Milo (M)
+          </button>
         </div>
 
-        {view === "capsule" && (
+        {askMiloOpen ? (
+          <AskMiloPanel
+            onClose={() => setAskMiloOpen(false)}
+            openSession={askMiloOpenSession}
+          />
+        ) : view === "capsule" && (
           <>
             <h1>hello world - ChatGotYourTongue</h1>
             <textarea

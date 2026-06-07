@@ -87,9 +87,23 @@ app.post("/speak", async (req, res) => {
 
 
 // GraphQL setup for Gralph
+const askMiloEvents = [];
+
 const typeDefs = gql`
+  type AskMiloEvent {
+    id: ID!
+    name: String!
+    detail: String
+    createdAt: String!
+  }
+
   type Query {
     ask(prompt: String!, model: String, service: String): String
+    askMiloEvents: [AskMiloEvent!]!
+  }
+
+  type Mutation {
+    logAskMiloEvent(name: String!, detail: String): AskMiloEvent!
   }
 `;
 // Import fetch for Node
@@ -142,6 +156,7 @@ try {
 
 const resolvers = {
   Query: {
+    askMiloEvents: () => askMiloEvents,
     ask: async (_, { prompt, model, service }) => {
   try {
     console.log("🔍 Gralph received:", { prompt, model, service });
@@ -156,6 +171,20 @@ const resolvers = {
     return "An error occurred while processing your request.";
   }
 },
+  },
+  Mutation: {
+    logAskMiloEvent: (_, { name, detail }) => {
+      const event = {
+        id: String(askMiloEvents.length + 1),
+        name,
+        detail: detail || null,
+        createdAt: new Date().toISOString(),
+      };
+
+      askMiloEvents.push(event);
+      console.log("Ask Milo event:", event);
+      return event;
+    },
   },
 };
 
