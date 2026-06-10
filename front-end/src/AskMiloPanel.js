@@ -24,6 +24,20 @@ const INTENT_BANK = {
     stretch:
       "I am asking Milo to explain how rental car returns work at the airport.",
     answerTriggers: ["rental car return", "car return"],
+    explanation:
+      "At an airport, you return a rental car at the rental car return area. You drive the car there. You park the car. You take your things. A worker checks the car. Then you finish the return.",
+    explanationChunks: [
+      "At an airport",
+      "you return a rental car",
+      "at the rental car return area",
+      "You drive the car there",
+      "You park the car",
+      "You take your things",
+      "A worker checks the car",
+      "Then you finish the return",
+    ],
+    followupQuestion: "Where do you return the rental car?",
+    followupAnswer: "rental car return area",
   },
   conjugate_haber: {
     triggers: ["haber", "conjuga", "conjugar", "verbo", "conjugate"],
@@ -41,6 +55,16 @@ const INTENT_BANK = {
     stretch:
       "I am asking about the verb haber. I would like Milo to explain how this verb is conjugated.",
     answerTriggers: ["haber"],
+    explanation:
+      "Haber is an important Spanish verb. It is often used as a helping verb. In the present tense, common forms are he, has, ha, hemos, and han.",
+    explanationChunks: [
+      "Haber is an important Spanish verb",
+      "It is often used as a helping verb",
+      "In the present tense",
+      "common forms are he, has, ha, hemos, and han",
+    ],
+    followupQuestion: "What kind of verb is haber often used as?",
+    followupAnswer: "helping verb",
   },
   find_bathroom: {
     triggers: ["baño", "bano", "bathroom", "restroom", "servicio", "toilet"],
@@ -51,6 +75,17 @@ const INTENT_BANK = {
     good: "I am asking where the bathroom is.",
     stretch: "I am asking Milo to tell me where the bathroom is.",
     answerTriggers: ["bathroom", "restroom", "toilet"],
+    explanation:
+      "To ask for the bathroom, say: Where is the bathroom? In an airport, you can also look for signs that say Restroom or Toilets.",
+    explanationChunks: [
+      "To ask for the bathroom, say",
+      "Where is the bathroom",
+      "In an airport",
+      "you can also look for signs",
+      "that say Restroom or Toilets",
+    ],
+    followupQuestion: "What sign might you look for?",
+    followupAnswer: "restroom",
   },
 };
 const loggedOpenSessions = new Set();
@@ -91,6 +126,10 @@ const AskMiloPanel = ({ onClose, openSession }) => {
   const [showComprehension, setShowComprehension] = useState(false);
   const [answer, setAnswer] = useState("");
   const [answerFeedback, setAnswerFeedback] = useState("");
+  const [comprehensionCorrect, setComprehensionCorrect] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [followupAnswer, setFollowupAnswer] = useState("");
+  const [followupFeedback, setFollowupFeedback] = useState("");
   const [logEvent] = useMutation(LOG_EVENT);
 
   const log = (name, detail) => {
@@ -117,6 +156,10 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     setShowComprehension(false);
     setAnswer("");
     setAnswerFeedback("");
+    setComprehensionCorrect(false);
+    setShowExplanation(false);
+    setFollowupAnswer("");
+    setFollowupFeedback("");
 
     if (!detectedIntent) {
       setActiveIntent(null);
@@ -188,9 +231,34 @@ const AskMiloPanel = ({ onClose, openSession }) => {
       normalizedAnswer.includes(normalizeAnswer(trigger))
     );
     setAnswerFeedback(isCorrect ? "Correct!" : "Try again.");
+    setComprehensionCorrect(isCorrect);
     log(
       "comprehension_answer_submitted",
       JSON.stringify({ answer: answer.trim(), correct: isCorrect })
+    );
+  };
+
+  const showMiloExplanation = () => {
+    setShowExplanation(true);
+    log("ask_milo_now_clicked", activeIntent.target);
+    log("milo_explanation_shown", activeIntent.explanation);
+  };
+
+  const speakExplanationChunk = (chunk) => {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(chunk));
+    log("explanation_chunk_tts_clicked", chunk);
+  };
+
+  const submitFollowupAnswer = (event) => {
+    event.preventDefault();
+    const isCorrect = normalizeAnswer(followupAnswer).includes(
+      normalizeAnswer(activeIntent.followupAnswer)
+    );
+    setFollowupFeedback(isCorrect ? "Correct!" : "Try again.");
+    log(
+      "explanation_followup_submitted",
+      JSON.stringify({ answer: followupAnswer.trim(), correct: isCorrect })
     );
   };
 
@@ -198,7 +266,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     <section className="ask-milo-panel" aria-labelledby="ask-milo-title">
       <div className="ask-milo-heading">
         <div>
-          <p className="ask-milo-eyebrow">Intent Bank v0.2</p>
+          <p className="ask-milo-eyebrow">Explanation Step v0.3</p>
           <h2 id="ask-milo-title">Ask Milo</h2>
         </div>
         <button className="secondary-button" type="button" onClick={onClose}>
@@ -305,7 +373,54 @@ const AskMiloPanel = ({ onClose, openSession }) => {
               </p>
             </div>
           )}
+          {comprehensionCorrect && !showExplanation && (
+            <button
+              className="submit-button"
+              type="button"
+              onClick={showMiloExplanation}
+            >
+              Ask Milo Now
+            </button>
+          )}
         </form>
+      )}
+
+      {showExplanation && (
+        <section className="comprehension-card">
+          <h3>Milo explains</h3>
+          <p>{activeIntent.explanation}</p>
+
+          <h4>Useful chunks</h4>
+          <div className="chunk-list">
+            {activeIntent.explanationChunks.map((chunk) => (
+              <button
+                className="chunk-speak-button"
+                type="button"
+                key={chunk}
+                onClick={() => speakExplanationChunk(chunk)}
+              >
+                {chunk}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={submitFollowupAnswer}>
+            <label htmlFor="explanation-followup">
+              {activeIntent.followupQuestion}
+            </label>
+            <input
+              id="explanation-followup"
+              value={followupAnswer}
+              onChange={(event) => setFollowupAnswer(event.target.value)}
+            />
+            <button className="submit-button" type="submit">
+              Check follow-up
+            </button>
+            {followupFeedback && (
+              <p className="answer-feedback">{followupFeedback}</p>
+            )}
+          </form>
+        </section>
       )}
     </section>
   );
