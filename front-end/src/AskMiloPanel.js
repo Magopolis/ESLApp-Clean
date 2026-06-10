@@ -5,6 +5,11 @@ const EXAMPLE_SPANISH =
   "¿Cómo funciona la devolución de autos de alquiler en el aeropuerto?";
 const NO_INTENT_MESSAGE =
   "Milo tilts his head. Try asking about rental car returns, haber, or the bathroom for this demo.";
+const TTS_SPEEDS = {
+  slower: 0.75,
+  normal: 1,
+  faster: 1.25,
+};
 
 const INTENT_BANK = {
   rental_car_returns: {
@@ -130,6 +135,8 @@ const AskMiloPanel = ({ onClose, openSession }) => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [followupAnswer, setFollowupAnswer] = useState("");
   const [followupFeedback, setFollowupFeedback] = useState("");
+  const [ttsSpeed, setTtsSpeed] = useState("normal");
+  const [voiceMessage, setVoiceMessage] = useState("");
   const [logEvent] = useMutation(LOG_EVENT);
 
   const log = (name, detail) => {
@@ -178,10 +185,26 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     log("target_sentence_shown", intent.target);
   };
 
-  const speakChunk = (chunk) => {
+  const speakText = (text, eventName) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = TTS_SPEEDS[ttsSpeed];
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(chunk));
-    log("chunk_tts_clicked", chunk);
+    window.speechSynthesis.speak(utterance);
+    log(eventName, text);
+  };
+
+  const speakChunk = (chunk) => {
+    speakText(chunk, "chunk_tts_clicked");
+  };
+
+  const changeTtsSpeed = (speed) => {
+    setTtsSpeed(speed);
+    log("tts_speed_changed", speed);
+  };
+
+  const speakQuestion = () => {
+    setVoiceMessage("Use Mac dictation for now.");
+    log("speak_question_clicked");
   };
 
   const toggleChunkSelection = (index) => {
@@ -245,9 +268,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
   };
 
   const speakExplanationChunk = (chunk) => {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(chunk));
-    log("explanation_chunk_tts_clicked", chunk);
+    speakText(chunk, "explanation_chunk_tts_clicked");
   };
 
   const submitFollowupAnswer = (event) => {
@@ -266,7 +287,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     <section className="ask-milo-panel" aria-labelledby="ask-milo-title">
       <div className="ask-milo-heading">
         <div>
-          <p className="ask-milo-eyebrow">Explanation Step v0.3</p>
+          <p className="ask-milo-eyebrow">Voice Integration v0.4</p>
           <h2 id="ask-milo-title">Ask Milo</h2>
         </div>
         <button className="secondary-button" type="button" onClick={onClose}>
@@ -282,10 +303,29 @@ const AskMiloPanel = ({ onClose, openSession }) => {
           value={sourceQuestion}
           onChange={(event) => setSourceQuestion(event.target.value)}
         />
+        <button className="secondary-button" type="button" onClick={speakQuestion}>
+          Speak question
+        </button>
+        {voiceMessage && <p className="practice-hint">{voiceMessage}</p>}
         <button className="submit-button" type="submit">
           Forge sentence
         </button>
       </form>
+
+      <div>
+        <strong>Playback speed:</strong>{" "}
+        {Object.keys(TTS_SPEEDS).map((speed) => (
+          <button
+            className="secondary-button"
+            type="button"
+            key={speed}
+            aria-pressed={ttsSpeed === speed}
+            onClick={() => changeTtsSpeed(speed)}
+          >
+            {speed.charAt(0).toUpperCase() + speed.slice(1)}
+          </button>
+        ))}
+      </div>
 
       {noIntentMessage && <p className="practice-hint">{noIntentMessage}</p>}
 
