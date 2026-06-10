@@ -3,18 +3,56 @@ import { gql, useMutation } from "@apollo/client";
 
 const EXAMPLE_SPANISH =
   "¿Cómo funciona la devolución de autos de alquiler en el aeropuerto?";
-const TARGET_ENGLISH =
-  "Milo, would you mind explaining to me how rental car returns work at the airport?";
-const INITIAL_CHUNKS = [
-  "Milo",
-  "would you mind",
-  "explaining",
-  "to me",
-  "how rental car",
-  "returns work",
-  "at the airport",
-];
-const ACCEPTED_ANSWER = "How rental car returns work";
+const NO_INTENT_MESSAGE =
+  "Milo tilts his head. Try asking about rental car returns, haber, or the bathroom for this demo.";
+
+const INTENT_BANK = {
+  rental_car_returns: {
+    triggers: ["auto", "alquiler", "devolución", "rental car", "return"],
+    target:
+      "Milo, would you mind explaining to me how rental car returns work at the airport?",
+    chunks: [
+      "Milo",
+      "would you mind",
+      "explaining to me",
+      "how rental car returns work",
+      "at the airport",
+    ],
+    question: "What are you asking Milo to explain?",
+    minimal: "How rental car returns work",
+    good: "I am asking about rental car returns.",
+    stretch:
+      "I am asking Milo to explain how rental car returns work at the airport.",
+    answerTriggers: ["rental car return", "car return"],
+  },
+  conjugate_haber: {
+    triggers: ["haber", "conjuga", "conjugar", "verbo", "conjugate"],
+    target: "Milo, would you mind explaining how to conjugate the verb haber?",
+    chunks: [
+      "Milo",
+      "would you mind",
+      "explaining",
+      "how to conjugate",
+      "the verb haber",
+    ],
+    question: "What verb are you asking Milo to explain?",
+    minimal: "haber",
+    good: "I am asking about the verb haber.",
+    stretch:
+      "I am asking about the verb haber. I would like Milo to explain how this verb is conjugated.",
+    answerTriggers: ["haber"],
+  },
+  find_bathroom: {
+    triggers: ["baño", "bano", "bathroom", "restroom", "servicio", "toilet"],
+    target: "Milo, where is the bathroom?",
+    chunks: ["Milo", "where is", "the bathroom"],
+    question: "What place are you asking for?",
+    minimal: "bathroom",
+    good: "I am asking where the bathroom is.",
+    stretch: "I am asking Milo to tell me where the bathroom is.",
+    answerTriggers: ["bathroom", "restroom", "toilet"],
+  },
+};
 const loggedOpenSessions = new Set();
 
 const LOG_EVENT = gql`
@@ -26,13 +64,30 @@ const LOG_EVENT = gql`
 `;
 
 const normalizeAnswer = (answer) =>
-  answer.trim().toLowerCase().replace(/[?.!]+$/, "");
+  answer
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[?.!]+$/, "");
+
+const detectIntent = (sourceQuestion) => {
+  const normalizedQuestion = normalizeAnswer(sourceQuestion);
+
+  return Object.entries(INTENT_BANK).find(([, intent]) =>
+    intent.triggers.some((trigger) =>
+      normalizedQuestion.includes(normalizeAnswer(trigger))
+    )
+  );
+};
 
 const AskMiloPanel = ({ onClose, openSession }) => {
   const [sourceQuestion, setSourceQuestion] = useState(EXAMPLE_SPANISH);
-  const [chunks, setChunks] = useState(INITIAL_CHUNKS);
+  const [activeIntent, setActiveIntent] = useState(null);
+  const [chunks, setChunks] = useState([]);
   const [selectedIndexes, setSelectedIndexes] = useState([]);
   const [sentenceShown, setSentenceShown] = useState(false);
+  const [noIntentMessage, setNoIntentMessage] = useState("");
   const [showComprehension, setShowComprehension] = useState(false);
   const [answer, setAnswer] = useState("");
   const [answerFeedback, setAnswerFeedback] = useState("");
@@ -55,13 +110,29 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     event.preventDefault();
     if (!sourceQuestion.trim()) return;
 
-    setChunks(INITIAL_CHUNKS);
-    setSelectedIndexes([]);
-    setSentenceShown(true);
-    setShowComprehension(false);
-    setAnswerFeedback("");
+    const detectedIntent = detectIntent(sourceQuestion);
+
     log("source_question_entered", sourceQuestion.trim());
-    log("target_sentence_shown", TARGET_ENGLISH);
+    setSelectedIndexes([]);
+    setShowComprehension(false);
+    setAnswer("");
+    setAnswerFeedback("");
+
+    if (!detectedIntent) {
+      setActiveIntent(null);
+      setChunks([]);
+      setSentenceShown(false);
+      setNoIntentMessage(NO_INTENT_MESSAGE);
+      return;
+    }
+
+    const [intentName, intent] = detectedIntent;
+    setActiveIntent(intent);
+    setChunks(intent.chunks);
+    setSentenceShown(true);
+    setNoIntentMessage("");
+    log("detected_intent", intentName);
+    log("target_sentence_shown", intent.target);
   };
 
   const speakChunk = (chunk) => {
@@ -107,13 +178,15 @@ const AskMiloPanel = ({ onClose, openSession }) => {
 
   const practiceFullSentence = () => {
     setShowComprehension(true);
-    log("full_sentence_record_clicked", TARGET_ENGLISH);
+    log("full_sentence_record_clicked", activeIntent.target);
   };
 
   const submitAnswer = (event) => {
     event.preventDefault();
-    const isCorrect =
-      normalizeAnswer(answer) === normalizeAnswer(ACCEPTED_ANSWER);
+    const normalizedAnswer = normalizeAnswer(answer);
+    const isCorrect = activeIntent.answerTriggers.some((trigger) =>
+      normalizedAnswer.includes(normalizeAnswer(trigger))
+    );
     setAnswerFeedback(isCorrect ? "Correct!" : "Try again.");
     log(
       "comprehension_answer_submitted",
@@ -125,7 +198,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     <section className="ask-milo-panel" aria-labelledby="ask-milo-title">
       <div className="ask-milo-heading">
         <div>
-          <p className="ask-milo-eyebrow">Sentence Forge v0.1</p>
+          <p className="ask-milo-eyebrow">Intent Bank v0.2</p>
           <h2 id="ask-milo-title">Ask Milo</h2>
         </div>
         <button className="secondary-button" type="button" onClick={onClose}>
@@ -146,10 +219,12 @@ const AskMiloPanel = ({ onClose, openSession }) => {
         </button>
       </form>
 
+      {noIntentMessage && <p className="practice-hint">{noIntentMessage}</p>}
+
       {sentenceShown && (
         <div className="sentence-practice">
           <h3>Target English</h3>
-          <p className="target-sentence">{TARGET_ENGLISH}</p>
+          <p className="target-sentence">{activeIntent.target}</p>
           <p className="practice-hint">
             Click a chunk to hear it. Select adjacent chunks to regroup them.
           </p>
@@ -193,7 +268,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
           </button>
 
           <div className="full-sentence-practice">
-            <p>{TARGET_ENGLISH}</p>
+            <p>{activeIntent.target}</p>
             <button
               className="record-button"
               type="button"
@@ -207,9 +282,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
 
       {showComprehension && (
         <form className="comprehension-card" onSubmit={submitAnswer}>
-          <label htmlFor="comprehension-answer">
-            What are you asking Milo to explain?
-          </label>
+          <label htmlFor="comprehension-answer">{activeIntent.question}</label>
           <input
             id="comprehension-answer"
             value={answer}
@@ -219,6 +292,19 @@ const AskMiloPanel = ({ onClose, openSession }) => {
             Check answer
           </button>
           {answerFeedback && <p className="answer-feedback">{answerFeedback}</p>}
+          {answerFeedback && (
+            <div>
+              <p>
+                <strong>Minimal:</strong> {activeIntent.minimal}
+              </p>
+              <p>
+                <strong>Good:</strong> {activeIntent.good}
+              </p>
+              <p>
+                <strong>Stretch:</strong> {activeIntent.stretch}
+              </p>
+            </div>
+          )}
         </form>
       )}
     </section>
