@@ -24,6 +24,7 @@ const AppContent = () => {
   const [askMiloOpen, setAskMiloOpen] = useState(false);
   const [askMiloOpenSession, setAskMiloOpenSession] = useState(0);
   const [ttsSpeedPercent, setTtsSpeedPercent] = useState(100);
+  const [playingTtsText, setPlayingTtsText] = useState("");
   const [logTtsSpeed] = useMutation(LOG_TTS_SPEED);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -127,7 +128,13 @@ if (service === "ollama") {
       return;
     }
 
-    speakText(selection, { speedPercent: ttsSpeedPercent });
+    setPlayingTtsText(selection);
+    speakText(selection, {
+      speedPercent: ttsSpeedPercent,
+      onStart: () => setPlayingTtsText(selection),
+      onEnd: () => setPlayingTtsText(""),
+      onError: () => setPlayingTtsText(""),
+    });
   };
 
   const changeTtsSpeed = (event) => {
@@ -213,10 +220,11 @@ if (service === "ollama") {
         <button
           className="secondary-button"
           type="button"
+          disabled={Boolean(playingTtsText)}
           onMouseDown={(event) => event.preventDefault()}
           onClick={speakHighlightedText}
         >
-          Speak
+          {playingTtsText ? "Speaking..." : "Speak"}
         </button>
         <label className="tts-speed-control" htmlFor="global-tts-speed">
           <strong>Playback speed: {ttsSpeedPercent}%</strong>
@@ -227,6 +235,7 @@ if (service === "ollama") {
             max="130"
             step="5"
             value={ttsSpeedPercent}
+            disabled={Boolean(playingTtsText)}
             onChange={changeTtsSpeed}
           />
           <span className="tts-speed-labels">
@@ -235,6 +244,9 @@ if (service === "ollama") {
             <span>130% Fast</span>
           </span>
         </label>
+        <span className="tts-playing-status" aria-live="polite">
+          {playingTtsText ? `Playing: ${playingTtsText}` : "Ready to speak"}
+        </span>
       </aside>
       <div className="main-content">
         <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
@@ -257,6 +269,9 @@ if (service === "ollama") {
             onClose={() => setAskMiloOpen(false)}
             openSession={askMiloOpenSession}
             ttsSpeedPercent={ttsSpeedPercent}
+            playingTtsText={playingTtsText}
+            onTtsStart={setPlayingTtsText}
+            onTtsEnd={() => setPlayingTtsText("")}
           />
         ) : view === "capsule" && (
           <>

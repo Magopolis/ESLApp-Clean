@@ -117,7 +117,14 @@ const detectIntent = (sourceQuestion) => {
   );
 };
 
-const AskMiloPanel = ({ onClose, openSession, ttsSpeedPercent }) => {
+const AskMiloPanel = ({
+  onClose,
+  openSession,
+  ttsSpeedPercent,
+  playingTtsText,
+  onTtsStart,
+  onTtsEnd,
+}) => {
   const [sourceQuestion, setSourceQuestion] = useState(EXAMPLE_SPANISH);
   const [activeIntent, setActiveIntent] = useState(null);
   const [chunks, setChunks] = useState([]);
@@ -181,7 +188,13 @@ const AskMiloPanel = ({ onClose, openSession, ttsSpeedPercent }) => {
   };
 
   const speakAndLog = (text, eventName) => {
-    speakText(text, { speedPercent: ttsSpeedPercent });
+    onTtsStart(text);
+    speakText(text, {
+      speedPercent: ttsSpeedPercent,
+      onStart: () => onTtsStart(text),
+      onEnd: onTtsEnd,
+      onError: onTtsEnd,
+    });
     log(eventName, text);
   };
 
@@ -274,7 +287,7 @@ const AskMiloPanel = ({ onClose, openSession, ttsSpeedPercent }) => {
     <section className="ask-milo-panel" aria-labelledby="ask-milo-title">
       <div className="ask-milo-heading">
         <div>
-          <p className="ask-milo-eyebrow">TTS Speed Fader v0.4.3</p>
+          <p className="ask-milo-eyebrow">TTS Feedback Polish v0.4.4</p>
           <h2 id="ask-milo-title">Ask Milo</h2>
         </div>
         <button className="secondary-button" type="button" onClick={onClose}>
@@ -313,11 +326,14 @@ const AskMiloPanel = ({ onClose, openSession, ttsSpeedPercent }) => {
             {chunks.map((chunk, index) => (
               <div className="chunk-card" key={`${chunk}-${index}`}>
                 <button
-                  className="chunk-speak-button"
+                  className={`chunk-speak-button ${
+                    playingTtsText === chunk ? "is-playing" : ""
+                  }`}
                   type="button"
+                  disabled={Boolean(playingTtsText)}
                   onClick={() => speakChunk(chunk)}
                 >
-                  {chunk}
+                  {playingTtsText === chunk ? `Playing: ${chunk}` : chunk}
                 </button>
                 <label className="chunk-select-label">
                   <input
@@ -406,12 +422,15 @@ const AskMiloPanel = ({ onClose, openSession, ttsSpeedPercent }) => {
           <div className="chunk-list">
             {activeIntent.explanationChunks.map((chunk) => (
               <button
-                className="chunk-speak-button"
+                className={`chunk-speak-button ${
+                  playingTtsText === chunk ? "is-playing" : ""
+                }`}
                 type="button"
                 key={chunk}
+                disabled={Boolean(playingTtsText)}
                 onClick={() => speakExplanationChunk(chunk)}
               >
-                {chunk}
+                {playingTtsText === chunk ? `Playing: ${chunk}` : chunk}
               </button>
             ))}
           </div>

@@ -82,11 +82,24 @@
     cursor: grabbing;
   }
 
+  .tts-speed-control input[type="range"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
   .tts-speed-labels {
     display: flex;
     justify-content: space-between;
     color: #52697a;
     font-size: 0.72rem;
+  }
+
+  .tts-playing-status {
+    flex-basis: 100%;
+    color: #006f72;
+    font-size: 0.85rem;
+    font-weight: bold;
+    overflow-wrap: anywhere;
   }
 
   .ask-milo-panel {
@@ -172,6 +185,21 @@
     cursor: pointer;
     font-size: 1rem;
     font-weight: bold;
+  }
+
+  .chunk-speak-button.is-playing {
+    border-color: #d97706;
+    background: #fff4d8;
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25);
+  }
+
+  .chunk-speak-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .chunk-speak-button.is-playing:disabled {
+    opacity: 1;
   }
 
   .chunk-select-label {

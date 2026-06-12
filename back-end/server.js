@@ -23,7 +23,7 @@ app.post("/say", (req, res) => {
 
   // Safely pass text to Python
   const safeText = text.replace(/"/g, '\\"');
-  const pythonPath = path.resolve(__dirname, "../venv/bin/python");
+  const pythonPath = process.env.PYTHON_PATH || "python3";
 const scriptPath = path.resolve(__dirname, "say.py");
 
 exec(`"${pythonPath}" "${scriptPath}" "${safeText}"`, (error, stdout, stderr) => {
