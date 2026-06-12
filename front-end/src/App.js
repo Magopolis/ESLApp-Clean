@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
+import { gql, useMutation } from "@apollo/client";
 import { fetchFromAPI } from "./apiService";
 import Playground from "./Playground/Playground";
 import Page3 from "./Playground/Page3";
 import AskMiloPanel from "./AskMiloPanel";
+import { speakText } from "./utils/speakText";
+
+const LOG_TTS_SPEED = gql`
+  mutation LogTtsSpeed($speedPercent: String!) {
+    logAskMiloEvent(name: "tts_speed_changed", detail: $speedPercent) {
+      id
+    }
+  }
+`;
 
 const AppContent = () => {
   const [view, setView] = useState("capsule");
@@ -13,8 +23,11 @@ const AppContent = () => {
   const [recording, setRecording] = useState(false);
   const [askMiloOpen, setAskMiloOpen] = useState(false);
   const [askMiloOpenSession, setAskMiloOpenSession] = useState(0);
+  const [ttsSpeedPercent, setTtsSpeedPercent] = useState(100);
+  const [logTtsSpeed] = useMutation(LOG_TTS_SPEED);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const highlightedTextRef = useRef("");
 
   const toggleMode = () =>
     setMode((prev) => (prev === "cloud" ? "local" : "cloud"));
@@ -78,6 +91,7 @@ if (service === "ollama") {
     }
 
     try {
+      // TODO: Migrate selected-text speech from the backend /say route to frontend browser TTS.
       const response = await fetch("http://localhost:5050/say", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,6 +104,38 @@ if (service === "ollama") {
     } catch (err) {
       console.error("❌ TTS request failed:", err);
     }
+  };
+
+  const getHighlightedText = () => {
+    const activeElement = document.activeElement;
+    const fieldSelection =
+      ["INPUT", "TEXTAREA"].includes(activeElement?.tagName) &&
+      typeof activeElement.selectionStart === "number"
+        ? activeElement.value.slice(
+            activeElement.selectionStart,
+            activeElement.selectionEnd
+          )
+        : "";
+    return (fieldSelection || window.getSelection().toString()).trim();
+  };
+
+  const speakHighlightedText = () => {
+    const selection = getHighlightedText() || highlightedTextRef.current;
+
+    if (!selection) {
+      alert("Please highlight some text to speak.");
+      return;
+    }
+
+    speakText(selection, { speedPercent: ttsSpeedPercent });
+  };
+
+  const changeTtsSpeed = (event) => {
+    const newSpeedPercent = Number(event.target.value);
+    setTtsSpeedPercent(newSpeedPercent);
+    logTtsSpeed({ variables: { speedPercent: String(newSpeedPercent) } }).catch(
+      (error) => console.error("Could not log TTS speed:", error)
+    );
   };
 
   const playAudio = () => {
@@ -136,6 +182,17 @@ if (service === "ollama") {
   }, []);
 
   useEffect(() => {
+    const rememberHighlightedText = () => {
+      const selection = getHighlightedText();
+      if (selection) highlightedTextRef.current = selection;
+    };
+
+    document.addEventListener("selectionchange", rememberHighlightedText);
+    return () =>
+      document.removeEventListener("selectionchange", rememberHighlightedText);
+  }, []);
+
+  useEffect(() => {
     const handleAskMiloShortcut = (event) => {
       if (
         event.key.toLowerCase() === "m" &&
@@ -151,6 +208,34 @@ if (service === "ollama") {
 
   return (
     <div className="app-container">
+      <aside className="global-tts-toolbar" aria-label="Highlighted text speech">
+        <strong>Read highlighted text</strong>
+        <button
+          className="secondary-button"
+          type="button"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={speakHighlightedText}
+        >
+          Speak
+        </button>
+        <label className="tts-speed-control" htmlFor="global-tts-speed">
+          <strong>Playback speed: {ttsSpeedPercent}%</strong>
+          <input
+            id="global-tts-speed"
+            type="range"
+            min="30"
+            max="130"
+            step="5"
+            value={ttsSpeedPercent}
+            onChange={changeTtsSpeed}
+          />
+          <span className="tts-speed-labels">
+            <span>30% Slow</span>
+            <span>100% Normal</span>
+            <span>130% Fast</span>
+          </span>
+        </label>
+      </aside>
       <div className="main-content">
         <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
           <button className="submit-button" onClick={() => handleAPICall("openai", "gpt-3.5-turbo")}>
@@ -171,6 +256,7 @@ if (service === "ollama") {
           <AskMiloPanel
             onClose={() => setAskMiloOpen(false)}
             openSession={askMiloOpenSession}
+            ttsSpeedPercent={ttsSpeedPercent}
           />
         ) : view === "capsule" && (
           <>

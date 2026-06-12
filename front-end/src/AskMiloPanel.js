@@ -1,15 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { gql, useMutation } from "@apollo/client";
+import { speakText } from "./utils/speakText";
 
 const EXAMPLE_SPANISH =
   "¿Cómo funciona la devolución de autos de alquiler en el aeropuerto?";
 const NO_INTENT_MESSAGE =
   "Milo tilts his head. Try asking about rental car returns, haber, or the bathroom for this demo.";
-const TTS_SPEEDS = {
-  slower: 0.75,
-  normal: 1,
-  faster: 1.25,
-};
 
 const INTENT_BANK = {
   rental_car_returns: {
@@ -121,7 +117,7 @@ const detectIntent = (sourceQuestion) => {
   );
 };
 
-const AskMiloPanel = ({ onClose, openSession }) => {
+const AskMiloPanel = ({ onClose, openSession, ttsSpeedPercent }) => {
   const [sourceQuestion, setSourceQuestion] = useState(EXAMPLE_SPANISH);
   const [activeIntent, setActiveIntent] = useState(null);
   const [chunks, setChunks] = useState([]);
@@ -135,7 +131,6 @@ const AskMiloPanel = ({ onClose, openSession }) => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [followupAnswer, setFollowupAnswer] = useState("");
   const [followupFeedback, setFollowupFeedback] = useState("");
-  const [ttsSpeed, setTtsSpeed] = useState("normal");
   const [voiceMessage, setVoiceMessage] = useState("");
   const [logEvent] = useMutation(LOG_EVENT);
 
@@ -185,21 +180,13 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     log("target_sentence_shown", intent.target);
   };
 
-  const speakText = (text, eventName) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = TTS_SPEEDS[ttsSpeed];
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+  const speakAndLog = (text, eventName) => {
+    speakText(text, { speedPercent: ttsSpeedPercent });
     log(eventName, text);
   };
 
   const speakChunk = (chunk) => {
-    speakText(chunk, "chunk_tts_clicked");
-  };
-
-  const changeTtsSpeed = (speed) => {
-    setTtsSpeed(speed);
-    log("tts_speed_changed", speed);
+    speakAndLog(chunk, "chunk_tts_clicked");
   };
 
   const speakQuestion = () => {
@@ -268,7 +255,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
   };
 
   const speakExplanationChunk = (chunk) => {
-    speakText(chunk, "explanation_chunk_tts_clicked");
+    speakAndLog(chunk, "explanation_chunk_tts_clicked");
   };
 
   const submitFollowupAnswer = (event) => {
@@ -287,7 +274,7 @@ const AskMiloPanel = ({ onClose, openSession }) => {
     <section className="ask-milo-panel" aria-labelledby="ask-milo-title">
       <div className="ask-milo-heading">
         <div>
-          <p className="ask-milo-eyebrow">Voice Integration v0.4</p>
+          <p className="ask-milo-eyebrow">TTS Speed Fader v0.4.3</p>
           <h2 id="ask-milo-title">Ask Milo</h2>
         </div>
         <button className="secondary-button" type="button" onClick={onClose}>
@@ -311,21 +298,6 @@ const AskMiloPanel = ({ onClose, openSession }) => {
           Forge sentence
         </button>
       </form>
-
-      <div>
-        <strong>Playback speed:</strong>{" "}
-        {Object.keys(TTS_SPEEDS).map((speed) => (
-          <button
-            className="secondary-button"
-            type="button"
-            key={speed}
-            aria-pressed={ttsSpeed === speed}
-            onClick={() => changeTtsSpeed(speed)}
-          >
-            {speed.charAt(0).toUpperCase() + speed.slice(1)}
-          </button>
-        ))}
-      </div>
 
       {noIntentMessage && <p className="practice-hint">{noIntentMessage}</p>}
 

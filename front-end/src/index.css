@@ -48,6 +48,47 @@
     background-color: #0056b3;
   }
 
+  .global-tts-toolbar {
+    box-sizing: border-box;
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    padding: 10px;
+    border: 2px solid #19324d;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #19324d;
+  }
+
+  .tts-speed-control {
+    display: grid;
+    gap: 4px;
+    width: min(360px, calc(100vw - 64px));
+  }
+
+  .tts-speed-control input[type="range"] {
+    width: 100%;
+    cursor: grab;
+    accent-color: #007b80;
+  }
+
+  .tts-speed-control input[type="range"]:active {
+    cursor: grabbing;
+  }
+
+  .tts-speed-labels {
+    display: flex;
+    justify-content: space-between;
+    color: #52697a;
+    font-size: 0.72rem;
+  }
+
   .ask-milo-panel {
     box-sizing: border-box;
     width: min(100%, 1000px);
