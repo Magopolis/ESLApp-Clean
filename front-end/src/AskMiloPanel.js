@@ -1,95 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useLazyQuery, useMutation } from "@apollo/client";
 import { speakText } from "./utils/speakText";
 
-const EXAMPLE_SPANISH =
-  "¿Cómo funciona la devolución de autos de alquiler en el aeropuerto?";
-const NO_INTENT_MESSAGE =
-  "Milo tilts his head. Try asking about rental car returns, haber, or the bathroom for this demo.";
+const INPUT_LANGUAGES = [
+  {
+    value: "en",
+    label: "English",
+    placeholder: "Ask a question in English",
+  },
+  {
+    value: "fr",
+    label: "Français",
+    placeholder: "Pose une question en français",
+  },
+  {
+    value: "es",
+    label: "Español",
+    placeholder: "Haz una pregunta en español",
+  },
+];
 
-const INTENT_BANK = {
-  rental_car_returns: {
-    triggers: ["auto", "alquiler", "devolución", "rental car", "return"],
-    target:
-      "Milo, would you mind explaining to me how rental car returns work at the airport?",
-    chunks: [
-      "Milo",
-      "would you mind",
-      "explaining to me",
-      "how rental car returns work",
-      "at the airport",
-    ],
-    question: "What are you asking Milo to explain?",
-    minimal: "How rental car returns work",
-    good: "I am asking about rental car returns.",
-    stretch:
-      "I am asking Milo to explain how rental car returns work at the airport.",
-    answerTriggers: ["rental car return", "car return"],
-    explanation:
-      "At an airport, you return a rental car at the rental car return area. You drive the car there. You park the car. You take your things. A worker checks the car. Then you finish the return.",
-    explanationChunks: [
-      "At an airport",
-      "you return a rental car",
-      "at the rental car return area",
-      "You drive the car there",
-      "You park the car",
-      "You take your things",
-      "A worker checks the car",
-      "Then you finish the return",
-    ],
-    followupQuestion: "Where do you return the rental car?",
-    followupAnswer: "rental car return area",
-  },
-  conjugate_haber: {
-    triggers: ["haber", "conjuga", "conjugar", "verbo", "conjugate"],
-    target: "Milo, would you mind explaining how to conjugate the verb haber?",
-    chunks: [
-      "Milo",
-      "would you mind",
-      "explaining",
-      "how to conjugate",
-      "the verb haber",
-    ],
-    question: "What verb are you asking Milo to explain?",
-    minimal: "haber",
-    good: "I am asking about the verb haber.",
-    stretch:
-      "I am asking about the verb haber. I would like Milo to explain how this verb is conjugated.",
-    answerTriggers: ["haber"],
-    explanation:
-      "Haber is an important Spanish verb. It is often used as a helping verb. In the present tense, common forms are he, has, ha, hemos, and han.",
-    explanationChunks: [
-      "Haber is an important Spanish verb",
-      "It is often used as a helping verb",
-      "In the present tense",
-      "common forms are he, has, ha, hemos, and han",
-    ],
-    followupQuestion: "What kind of verb is haber often used as?",
-    followupAnswer: "helping verb",
-  },
-  find_bathroom: {
-    triggers: ["baño", "bano", "bathroom", "restroom", "servicio", "toilet"],
-    target: "Milo, where is the bathroom?",
-    chunks: ["Milo", "where is", "the bathroom"],
-    question: "What place are you asking for?",
-    minimal: "bathroom",
-    good: "I am asking where the bathroom is.",
-    stretch: "I am asking Milo to tell me where the bathroom is.",
-    answerTriggers: ["bathroom", "restroom", "toilet"],
-    explanation:
-      "To ask for the bathroom, say: Where is the bathroom? In an airport, you can also look for signs that say Restroom or Toilets.",
-    explanationChunks: [
-      "To ask for the bathroom, say",
-      "Where is the bathroom",
-      "In an airport",
-      "you can also look for signs",
-      "that say Restroom or Toilets",
-    ],
-    followupQuestion: "What sign might you look for?",
-    followupAnswer: "restroom",
-  },
-};
 const loggedOpenSessions = new Set();
+
+const FORGE_TARGET_ENGLISH = gql`
+  query ForgeAskMiloTarget($prompt: String!, $model: String) {
+    ask(prompt: $prompt, model: $model)
+  }
+`;
 
 const LOG_EVENT = gql`
   mutation LogAskMiloEvent($name: String!, $detail: String) {
@@ -107,15 +44,39 @@ const normalizeAnswer = (answer) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[?.!]+$/, "");
 
-const detectIntent = (sourceQuestion) => {
-  const normalizedQuestion = normalizeAnswer(sourceQuestion);
+const splitIntoChunks = (sentence) =>
+  sentence
+    .split(/(?<=[.!?])\s+/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
 
-  return Object.entries(INTENT_BANK).find(([, intent]) =>
-    intent.triggers.some((trigger) =>
-      normalizedQuestion.includes(normalizeAnswer(trigger))
-    )
-  );
+const buildForgedSentence = (target) => {
+  return {
+    target,
+    chunks: splitIntoChunks(target),
+    question: "What are you asking Milo to help with?",
+    minimal: "English phrasing",
+    good: "I am asking Milo for help saying my question in English.",
+    stretch:
+      "I am asking Milo to help turn my question into useful English phrasing.",
+    answerTriggers: ["english", "phrasing", "question"],
+    explanation: target,
+    explanationChunks: splitIntoChunks(target),
+    followupQuestion: "What language do you want help using?",
+    followupAnswer: "English",
+  };
 };
+
+const buildForgePrompt = (input, language) => `
+You are Milo, an English sentence coach.
+Convert the learner's input into one natural, concise English sentence or question.
+Return only the target English sentence.
+Do not explain.
+Do not mention alternatives.
+
+Learner input language: ${language || "unknown"}
+Learner input: ${input}
+`;
 
 const AskMiloPanel = ({
   onClose,
@@ -125,12 +86,12 @@ const AskMiloPanel = ({
   onTtsStart,
   onTtsEnd,
 }) => {
-  const [sourceQuestion, setSourceQuestion] = useState(EXAMPLE_SPANISH);
+  const [sourceQuestion, setSourceQuestion] = useState("");
+  const [inputLanguage, setInputLanguage] = useState("es");
   const [activeIntent, setActiveIntent] = useState(null);
   const [chunks, setChunks] = useState([]);
   const [selectedIndexes, setSelectedIndexes] = useState([]);
   const [sentenceShown, setSentenceShown] = useState(false);
-  const [noIntentMessage, setNoIntentMessage] = useState("");
   const [showComprehension, setShowComprehension] = useState(false);
   const [answer, setAnswer] = useState("");
   const [answerFeedback, setAnswerFeedback] = useState("");
@@ -140,6 +101,12 @@ const AskMiloPanel = ({
   const [followupFeedback, setFollowupFeedback] = useState("");
   const [voiceMessage, setVoiceMessage] = useState("");
   const [logEvent] = useMutation(LOG_EVENT);
+  const [forgeTargetEnglish, { loading: forgeLoading }] = useLazyQuery(
+    FORGE_TARGET_ENGLISH,
+    {
+      fetchPolicy: "no-cache",
+    }
+  );
 
   const log = (name, detail) => {
     logEvent({ variables: { name, detail } }).catch((error) => {
@@ -154,11 +121,9 @@ const AskMiloPanel = ({
     }
   }, [openSession]);
 
-  const showTargetSentence = (event) => {
+  const showTargetSentence = async (event) => {
     event.preventDefault();
     if (!sourceQuestion.trim()) return;
-
-    const detectedIntent = detectIntent(sourceQuestion);
 
     log("source_question_entered", sourceQuestion.trim());
     setSelectedIndexes([]);
@@ -169,22 +134,34 @@ const AskMiloPanel = ({
     setShowExplanation(false);
     setFollowupAnswer("");
     setFollowupFeedback("");
+    setActiveIntent(null);
+    setChunks([]);
+    setSentenceShown(false);
 
-    if (!detectedIntent) {
+    try {
+      const response = await forgeTargetEnglish({
+        variables: {
+          prompt: buildForgePrompt(sourceQuestion.trim(), inputLanguage),
+          model: "gpt-3.5-turbo",
+        },
+      });
+      const target = response.data?.ask?.trim();
+
+      if (!target) {
+        throw new Error("Ask Milo did not return a target sentence.");
+      }
+
+      const forgedSentence = buildForgedSentence(target);
+      setActiveIntent(forgedSentence);
+      setChunks(forgedSentence.chunks);
+      setSentenceShown(true);
+      log("target_sentence_shown", forgedSentence.target);
+    } catch (error) {
+      console.error("Could not forge Ask Milo sentence:", error);
       setActiveIntent(null);
       setChunks([]);
       setSentenceShown(false);
-      setNoIntentMessage(NO_INTENT_MESSAGE);
-      return;
     }
-
-    const [intentName, intent] = detectedIntent;
-    setActiveIntent(intent);
-    setChunks(intent.chunks);
-    setSentenceShown(true);
-    setNoIntentMessage("");
-    log("detected_intent", intentName);
-    log("target_sentence_shown", intent.target);
   };
 
   const speakAndLog = (text, eventName) => {
@@ -206,6 +183,10 @@ const AskMiloPanel = ({
     setVoiceMessage("Use Mac dictation for now.");
     log("speak_question_clicked");
   };
+
+  const selectedInputLanguage = INPUT_LANGUAGES.find(
+    (language) => language.value === inputLanguage
+  );
 
   const toggleChunkSelection = (index) => {
     setSelectedIndexes((current) =>
@@ -297,9 +278,26 @@ const AskMiloPanel = ({
 
       <form onSubmit={showTargetSentence}>
         <label htmlFor="milo-source-question">Ask a question in Spanish</label>
+        <div className="ask-milo-language-buttons" aria-label="Input language">
+          {INPUT_LANGUAGES.map((language) => (
+            <button
+              className={`ask-milo-language-button ${
+                inputLanguage === language.value ? "is-selected" : ""
+              }`}
+              type="button"
+              key={language.value}
+              aria-pressed={inputLanguage === language.value}
+              onClick={() => setInputLanguage(language.value)}
+            >
+              {language.label}
+            </button>
+          ))}
+        </div>
         <textarea
           id="milo-source-question"
           className="ask-milo-input"
+          lang={inputLanguage}
+          placeholder={selectedInputLanguage.placeholder}
           value={sourceQuestion}
           onChange={(event) => setSourceQuestion(event.target.value)}
         />
@@ -307,12 +305,14 @@ const AskMiloPanel = ({
           Speak question
         </button>
         {voiceMessage && <p className="practice-hint">{voiceMessage}</p>}
-        <button className="submit-button" type="submit">
-          Forge sentence
+        <button
+          className="submit-button"
+          type="submit"
+          disabled={forgeLoading || !sourceQuestion.trim()}
+        >
+          {forgeLoading ? "Forging..." : "Forge sentence"}
         </button>
       </form>
-
-      {noIntentMessage && <p className="practice-hint">{noIntentMessage}</p>}
 
       {sentenceShown && (
         <div className="sentence-practice">

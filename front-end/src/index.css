@@ -149,6 +149,29 @@
     font-size: 1rem;
   }
 
+  .ask-milo-language-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+  }
+
+  .ask-milo-language-button {
+    padding: 8px 12px;
+    border: 1px solid #19324d;
+    border-radius: 6px;
+    background: #e8eef2;
+    color: #19324d;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .ask-milo-language-button.is-selected {
+    border-color: #007b80;
+    background: #007b80;
+    color: white;
+  }
+
   .target-sentence {
     font-size: 1.35rem;
     font-weight: bold;
