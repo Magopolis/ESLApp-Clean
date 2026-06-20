@@ -50,10 +50,13 @@ const splitIntoChunks = (sentence) =>
     .map((chunk) => chunk.trim())
     .filter(Boolean);
 
+const splitIntoWordTokens = (sentence) =>
+  sentence.trim().split(/\s+/).filter(Boolean);
+
 const buildForgedSentence = (target) => {
   return {
     target,
-    chunks: splitIntoChunks(target),
+    chunks: splitIntoWordTokens(target),
     question: "What are you asking Milo to help with?",
     minimal: "English phrasing",
     good: "I am asking Milo for help saying my question in English.",
